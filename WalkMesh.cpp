@@ -176,46 +176,47 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		
 		 // crosses edge
 		glm::vec3 endPosEdge = glm::vec3(pos.x+step.x*t, pos.y+step.y*t, pos.z+step.z*t);
-		glm::vec3 endPosWeight = barycentric_weights(a,b,c,endPosEdge);
+		glm::vec3 endPosWeights = barycentric_weights(a,b,c,endPosEdge);
 		
 		if (side == 0) {
-			end.weights.x = endPosWeight.y;
-			end.weights.y = endPosWeight.z;
-			end.weights.z = endPosWeight.x;
+			end.weights.x = endPosWeights.y;
+			end.weights.y = endPosWeights.z;
+			end.weights.z = endPosWeights.x;
 			end.indices.x = start.indices.y;
 			end.indices.y = start.indices.z;
 			end.indices.z = start.indices.x;
 		} else if (side == 1) {
-			end.weights.x = endPosWeight.z;
-			end.weights.y = endPosWeight.x;
-			end.weights.z = endPosWeight.y;
+			end.weights.x = endPosWeights.z;
+			end.weights.y = endPosWeights.x;
+			end.weights.z = endPosWeights.y;
 			end.indices.x = start.indices.z;
 			end.indices.y = start.indices.x;
 			end.indices.z = start.indices.y;
 		} else {
-			end.weights.x = endPosWeight.x;
-			end.weights.y = endPosWeight.y;
-			end.weights.z = endPosWeight.z;
+			end.weights.x = endPosWeights.x;
+			end.weights.y = endPosWeights.y;
+			end.weights.z = endPosWeights.z;
 			end.indices.x = start.indices.x;
 			end.indices.y = start.indices.y;
 			end.indices.z = start.indices.z;
 		}
+		
+		time = t;
 			
+	} else {
+		end = start;
+		end.weights.x = wa;
+		end.weights.y = wb;
+		end.weights.z = wc;
+		time = 1;
 	}
-	
-	//no edge is crossed, event will just be taking the whole step:
-	time = 1.0f;
-	end = start;
-	end.weights.x = wa;
-	end.weights.y = wb;
-	end.weights.z = wc;
 
 	//Remember: our convention is that when a WalkPoint is on an edge,
 	// then wp.weights.z == 0.0f (so will likely need to re-order the indices)
 }	
 
 bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *rotation_) const {
-	assert(start.weights.z == 0.0f);
+	assert(start.weights.z <= 0.001f);
 	assert(start.indices.x <= vertices.size() && start.indices.y <= vertices.size() && start.indices.z <= vertices.size());
 
 	assert(end_);
@@ -224,7 +225,6 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 	assert(rotation_);
 	auto &rotation = *rotation_;
 
-	assert(start.weights.z == 0.0f); //*must* be on an edge.
 	glm::uvec2 edge = glm::uvec2(start.indices);
 
 	//check if 'edge' is a non-boundary edge:
