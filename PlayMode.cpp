@@ -66,7 +66,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	player.camera->transform->position = glm::vec3(0.0f, -3.0f, 3.0f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	player.camera->transform->rotation = glm::angleAxis(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -127,12 +127,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, upDir) * player.transform->rotation;
 
-			float pitch = glm::pitch(player.camera->transform->rotation);
-			pitch += motion.y * player.camera->fovy;
-			//camera looks down -z (basically at the player's feet) when pitch is at zero.
-			pitch = std::min(pitch, 0.95f * 3.1415926f);
-			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			player.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			// update yaw of character so that it's always facing front
+			character->rotation = glm::angleAxis(-motion.x * player.camera->fovy, upDir) * character->rotation;
 
 			return true;
 		}
