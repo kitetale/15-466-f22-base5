@@ -28,6 +28,9 @@ struct PlayMode : Mode {
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
+	Scene::Transform *character = nullptr;
+	glm::vec3 char_pos;
+
 	//player info:
 	struct Player {
 		WalkPoint at;
