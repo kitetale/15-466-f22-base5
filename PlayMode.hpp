@@ -29,7 +29,6 @@ struct PlayMode : Mode {
 	Scene scene;
 
 	Scene::Transform *character = nullptr;
-	glm::vec3 char_pos;
 
 	//player info:
 	struct Player {
