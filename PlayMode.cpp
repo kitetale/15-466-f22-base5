@@ -374,3 +374,98 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	}
 	GL_ERRORS();
 }
+
+
+void Walker::update_legs() {
+	//rotate the leg_to_leg such that it has body's rotation:
+	glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), glm::radians(360.f - world_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::vec3 left_offset = glm::vec3(glm::vec4(body_to_leftleg, 1.0f) * rot_mat);
+	glm::vec3 right_offset = glm::vec3(glm::vec4(body_to_rightleg, 1.0f) * rot_mat);
+	//add onto postion of legs:
+	left_leg.hip->position = body->position + left_offset;
+	right_leg.hip->position = body->position + right_offset;
+}
+
+//take target (in world space) and updates the ankle to target
+void Leg::update(glm::vec3 const &targetWorld) {
+	/*referenced this tutorial:
+	https://www.alanzucconi.com/2018/05/02/ik-2d-1/ */
+	//a little too tired to implement this rn, but here's my thougts:
+
+	//find rotation needed on the hip level to support 3d movement
+	/*
+	1. counter act the rotation of the body (get world rotation of body)
+	2. do what we did before, basically??
+	3. rotate it such that it encompasses the body rotation again
+	*/
+	
+	glm::vec3 hip_world = hip->getWorldPosition();
+	std::cout << "hip_world: " << hip_world.x << ", " << hip_world.y << ", " << hip_world.z << std::endl;
+	glm::vec3 omega = (hip_world - targetWorld);
+	//assert (glm::vec3(omega.x, omega.y, 0.0f) != glm::vec3(0.0f, 0.0f, 0.0f));
+	glm::vec3 omega_xy = glm::vec3(omega.x, omega.y, 0.0f);
+	if (omega_xy == glm::vec3(0.0f, 0.0f, 0.0f)) {
+		omega_xy = glm::vec3(1.0f,0.0f, 0.0f);
+	} else {
+		omega_xy = glm::normalize(omega_xy);
+	}
+	glm::quat rotateBack = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), omega_xy);
+	//rotate target such that target is on the x axis
+	glm::vec3 target = glm::rotation(omega_xy, glm::vec3(1.0f, 0.0f, 0.0f)) * targetWorld;
+	std::cout << "target: " << target.x << ", " << target.y << ", " << target.z << std::endl;
+	//glm::quat tester = glm::inverse(body->getWorldRotation()) * rotateBack;
+
+	//rotate the hip back such that it's x axis is the same as the world x axis
+	length_c = glm::length(target - hip_world);// this calculation needs to be done on that plane
+	std::cout << "length_c: " << length_c << std::endl;
+	//account for the case where target is too far away:
+	//angle from hip to target (in radians)
+	float theta = atan2(target.z - hip_world.z, target.x - hip_world.x);
+	std::cout << "theta: " << theta << std::endl;
+	//too far away
+	if ( length_a + length_b < length_c) {
+		angleA = theta;
+		angleB = 0.0f;
+	} 
+	else
+	{
+		float thing = (length_a * length_a + length_c * length_c - length_b * length_b) / (2 * length_a * length_c);
+		std::cout<< "thing: " << thing << std::endl;
+		//inner angle Alpha (in radians)
+		float alpha = acos((length_a * length_a + length_c * length_c - length_b * length_b) / (2.0f * length_a * length_c));
+		//inner angle beta (in radians)
+		float beta = acos((length_a * length_a + length_b * length_b - length_c * length_c) / (2.0f * length_a * length_b));
+		//calculate the respective angles to be applied to the joints:
+		//reversing the signs here can change the direction of the leg
+		angleA = theta - alpha; // of is it theta + alpha?
+		angleB = (float)M_PI - beta;
+	}	
+
+	//update the transforms:
+	hip->rotation = glm::angleAxis(-angleA, glm::vec3(0.0f, 1.0f,.0f)); //* rotateBack;
+	knee->rotation = glm::angleAxis(-angleB, glm::vec3(0.0f, 1.0f, 0.0f));
+
+}
+
+void Leg::printEverything() {
+	std::cout << "---------------------" << std::endl;
+	//find world position 
+	glm::vec3 hipworld = hip->make_local_to_world() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glm::vec3 kneeworld = knee->make_local_to_world() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glm::vec3 footworld = ankle->make_local_to_world() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	//print world position
+	std::cout << "hipworld: " << hipworld.x << ", " << hipworld.y << ", " << hipworld.z << std::endl;
+	std::cout << "kneeworld: " << kneeworld.x << ", " << kneeworld.y << ", " << kneeworld.z << std::endl;
+	std::cout << "footworld: " << footworld.x << ", " << footworld.y << ", " << footworld.z << std::endl;
+	//so what the fuck are these
+	/*
+	std::cout << "hip position: " << hip->position.x << ", " << hip->position.y << ", " << hip->position.z << std::endl;
+	std::cout << "knee position: " << knee->position.x << ", " << knee->position.y << ", " << knee->position.z << std::endl;
+	std::cout << "ankle position: " << ankle->position.x << ", " << ankle->position.y << ", " << ankle->position.z << std::endl;
+	*/
+	std::cout << "angleA: " << angleA << std::endl;
+	std::cout << "angleB: " << angleB << std::endl;
+	std::cout << "length_a: " << length_a << std::endl;
+	std::cout << "length_b: " << length_b << std::endl;
+	std::cout << "---------------------" << std::endl;
+}

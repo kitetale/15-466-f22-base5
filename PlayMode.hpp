@@ -8,6 +8,74 @@
 #include <vector>
 #include <deque>
 
+//testing IK: leg
+struct Leg {
+	//basic transformations:
+	Scene::Transform *hip = nullptr;
+	Scene::Transform *knee = nullptr;
+	Scene::Transform *ankle = nullptr;
+	//length of leg segments:
+	float length_a = 0.0f;
+	float length_b = 0.0f;
+	float length_c = 0.0f;
+	//supplementary angles for IK:
+	float angleA = 0.0f;
+	float angleB = 0.0f;
+
+	//walkmesh location:
+	WalkPoint at;
+	//make a default constructor:
+
+	float outer_angle = 0.0f;
+	Leg() = default;
+	//make a constructor that takes in the three joints:
+	Leg(Scene::Transform *hip_, Scene::Transform *knee_, Scene::Transform *ankle_) : hip(hip_), knee(knee_), ankle(ankle_) {
+		//compute lengths of leg segments:
+		length_a = glm::length(hip->getWorldPosition() - knee->getWorldPosition());
+		length_b = glm::length(knee->getWorldPosition() - ankle->getWorldPosition());
+	}
+
+	//update function to move the leg to a given position:
+	void update(glm::vec3 const &targetWorld);
+	//debug print function:
+	void printEverything();
+};
+
+
+struct Walker {
+	//a body with two legs
+	Scene::Transform *body = nullptr;
+	Leg left_leg = Leg();
+	Leg right_leg = Leg();
+
+	//position on the walkmesh:
+	WalkPoint at;
+	//how far should we hover off the ground?
+	float groundOffset = 8.0f;
+	//body to leg offset:
+	glm::vec3 body_to_leftleg = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 body_to_rightleg = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	//movement:
+	float speed = 0.5f;
+
+	float world_rotation = 0.0f;
+
+	//make a default constructor:
+	Walker() = default;
+
+	//make a constructor that takes in the body and the two legs:
+	Walker(Scene::Transform *body_, Leg left_leg_, Leg right_leg_) : body(body_), left_leg(left_leg_), right_leg(right_leg_) {
+		body_to_leftleg = body->getWorldPosition() - left_leg.hip->getWorldPosition();
+		body_to_rightleg = body->getWorldPosition() - right_leg.hip->getWorldPosition();
+		left_leg.knee->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		
+	}
+
+	//update function to move legs accordingly 
+	void update_legs();
+};
+
 struct PlayMode : Mode {
 	PlayMode();
 	virtual ~PlayMode();
