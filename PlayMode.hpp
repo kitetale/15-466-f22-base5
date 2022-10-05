@@ -25,7 +25,7 @@ struct PlayMode : Mode {
 	} r1, r2, r3, r4;
 
 	glm::vec3 r1_base;
-	
+
 	//width, length, height of character
 	glm::vec3 dimension = glm::vec3 (1.0f, 1.0f, 2.0f); // height is from the floor
 	glm::vec3 halfDim = dimension/2.0f; //half of each for ease of computation
@@ -43,7 +43,6 @@ struct PlayMode : Mode {
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
-	Scene::Transform *character = nullptr;
 	Scene::Transform *ray1 = nullptr;
 	glm::quat ray1_base_rot;
 
@@ -54,7 +53,12 @@ struct PlayMode : Mode {
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
-		//camera is at player's head and will be pitched by mouse up/down motion:
-		Scene::Camera *camera = nullptr;
 	} player;
+
+	// camera 
+	struct Character {
+		Scene::Transform *character_transform = nullptr;
+		Scene::Camera *camera = nullptr;
+	} character;
+	glm::quat char_base_rot;
 };

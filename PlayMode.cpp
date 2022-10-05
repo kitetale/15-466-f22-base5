@@ -51,24 +51,25 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	//get character mesh
 	for (auto &transform : scene.transforms) {
-		if (transform.name == "character") character = &transform;
+		if (transform.name == "character") character.character_transform = &transform;
 		if (transform.name == "raybox") ray1 = &transform;
 	}
 	ray1_base_rot = ray1->rotation;
+	char_base_rot = character.character_transform->rotation;
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
 	scene.cameras.emplace_back(&scene.transforms.back());
-	player.camera = &scene.cameras.back();
-	player.camera->fovy = glm::radians(60.0f);
-	player.camera->near = 0.01f;
-	player.camera->transform->parent = player.transform;
+	character.camera = &scene.cameras.back();
+	character.camera->fovy = glm::radians(90.0f);
+	character.camera->near = 0.01f;
+	character.camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
-	player.camera->transform->position = glm::vec3(0.0f, -3.0f, 3.0f);
+	character.camera->transform->position = glm::vec3(0.0f, -3.0f, 3.0f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	player.camera->transform->rotation = glm::angleAxis(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	character.camera->transform->rotation = glm::angleAxis(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -175,11 +176,15 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				-evt.motion.yrel / float(window_size.y)
 			);
 			glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
-			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, upDir) * player.transform->rotation;
+			player.transform->rotation = glm::angleAxis(-motion.x * character.camera->fovy, upDir) * player.transform->rotation;
 
 			// update yaw of character so that it's always facing front
-			character->rotation = glm::angleAxis(-motion.x * player.camera->fovy, upDir) * character->rotation;
-
+			character.character_transform->rotation = glm::angleAxis(-motion.x *character.camera->fovy, upDir) * character.character_transform->rotation;
+			//std::cout<<"pos: "<< character.character_transform->position.x << ", "<< character.character_transform->position.y << ", "<<character.character_transform->position.z<<std::endl;
+			glm::vec3 location = character.character_transform->make_local_to_world() * glm::vec4(0.0f,0.0f,0.0f,1.0f);
+			std::cout<<"pos: "<< location.x << ", "<< location.y << ", "<<location.z<<std::endl;
+			
+			
 			return true;
 		}
 	}
@@ -201,7 +206,6 @@ void PlayMode::update(float elapsed) {
 		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
 		glm::vec3(-1.0f, 0.0f, 0.0f)
 	);
-	std::cout<<"r1 dir: "<< r1.dir.x << ", "<< r1.dir.y << ", "<<r1.dir.z<<std::endl;
 	if (BoxRayCollision(r1)) { //collides with ray
 		std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
 
@@ -274,15 +278,15 @@ void PlayMode::update(float elapsed) {
 		player.transform->position = walkmesh->to_world_point(player.at);
 
 		// update character mesh's position to respect walking
-		character->position = walkmesh->to_world_point(player.at);
+		character.character_transform->position = walkmesh->to_world_point(player.at);
 		// update bounding box info based on current new pos
 		// we'll disregard orientation since it's a small diff and our box is 'nice'
-		minBound.x = character->position.x - halfDim.x;
-		maxBound.x = character->position.x + halfDim.x;
-		minBound.y = character->position.y - halfDim.y;
-		maxBound.y = character->position.y + halfDim.y;
-		minBound.z = character->position.z - halfDim.z;
-		maxBound.z = character->position.z + halfDim.z;
+		minBound.x = character.character_transform->position.x - halfDim.x;
+		maxBound.x = character.character_transform->position.x + halfDim.x;
+		minBound.y = character.character_transform->position.y - halfDim.y;
+		maxBound.y = character.character_transform->position.y + halfDim.y;
+		minBound.z = character.character_transform->position.z - halfDim.z;
+		maxBound.z = character.character_transform->position.z + halfDim.z;
 
 
 		{ //update player's rotation to respect local (smooth) up-vector:
@@ -294,7 +298,7 @@ void PlayMode::update(float elapsed) {
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 
 			// update characte mesh's rotation 
-			character->rotation = glm::normalize(adjust * character->rotation);
+			character.character_transform->rotation = glm::normalize(adjust * character.character_transform->rotation);
 		}
 
 		/*
@@ -316,7 +320,7 @@ void PlayMode::update(float elapsed) {
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	//update camera aspect ratio for drawable:
-	player.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+	character.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
@@ -333,12 +337,12 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
-	scene.draw(*player.camera);
+	scene.draw(*character.camera);
 
 	/* In case you are wondering if your walkmesh is lining up with your scene, try:
 	{
 		glDisable(GL_DEPTH_TEST);
-		DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
+		DrawLines lines(character.camera->make_projection() * glm::mat4(character.camera->transform->make_world_to_local()));
 		for (auto const &tri : walkmesh->triangles) {
 			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
