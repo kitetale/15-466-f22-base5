@@ -52,7 +52,9 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//get character mesh
 	for (auto &transform : scene.transforms) {
 		if (transform.name == "character") character = &transform;
+		if (transform.name == "raybox") ray1 = &transform;
 	}
+	ray1_base_rot = ray1->rotation;
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -71,10 +73,57 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
+	r1.orig = ray1->position;
+	r1.dir = glm::vec3(0.f,0.f,-1.0f);
+
 }
 
 PlayMode::~PlayMode() {
 }
+
+bool PlayMode::BoxRayCollision(Ray r) {
+	// ray box collision ref : https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
+	glm::vec3 invdir = 1.0f / r.dir;
+	
+	float tmin, tmax, tymin, tymax, tzmin, tzmax; 
+	// set box bounds depending on ray dir
+	if (invdir.x<0) {
+		tmin = (maxBound.x - r.orig.x) * invdir.x;
+		tmax = (minBound.x - r.orig.x) * invdir.x;
+	} else {
+		tmin = (minBound.x - r.orig.x) * invdir.x;
+		tmax = (maxBound.x - r.orig.x) * invdir.x;
+	}
+	if (invdir.y<0) {
+		tymin = (maxBound.y - r.orig.y) * invdir.y;
+		tymax = (minBound.y - r.orig.y) * invdir.y;
+	} else {
+		tymin = (minBound.y - r.orig.y) * invdir.y;
+		tymax = (maxBound.y - r.orig.y) * invdir.y;
+	}
+
+	if ((tmin > tymax) || (tymin > tmax)) return false;
+
+	if (tymin > tmin) tmin = tymin;
+	if (tymax < tmax) tmax = tymax;
+
+	if (invdir.z<0) {
+		tzmin = (maxBound.z - r.orig.z) * invdir.z;
+		tzmax = (minBound.z - r.orig.z) * invdir.z;
+	} else {
+		tzmin = (minBound.z - r.orig.z) * invdir.z;
+		tzmax = (maxBound.z - r.orig.z) * invdir.z;
+	}
+
+	if ((tmin > tzmax) || (tzmin > tmax)) return false;
+
+	if (tzmin > tmin) tmin = tzmin;
+	if (tzmax < tmax) tmax = tzmax;
+
+	return true;
+}
+
+
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
 
@@ -138,6 +187,16 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void PlayMode::update(float elapsed) {
+
+	//slowly rotates through [0,1):
+	wobble += elapsed / 10.0f;
+	wobble -= std::floor(wobble);
+
+	ray1->rotation = ray1_base_rot * glm::angleAxis(
+		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
+		glm::vec3(1.0f, 0.0f, 0.0f)
+	);
+
 	//player walking:
 	{
 		//combine inputs into a move:
@@ -206,6 +265,15 @@ void PlayMode::update(float elapsed) {
 
 		// update character mesh's position to respect walking
 		character->position = walkmesh->to_world_point(player.at);
+		// update bounding box info based on current new pos
+		// we'll disregard orientation since it's a small diff and our box is 'nice'
+		minBound.x = character->position.x - halfDim.x;
+		maxBound.x = character->position.x + halfDim.x;
+		minBound.y = character->position.y - halfDim.y;
+		maxBound.y = character->position.y + halfDim.y;
+		minBound.z = character->position.z - halfDim.z;
+		maxBound.z = character->position.z + halfDim.z;
+
 
 		{ //update player's rotation to respect local (smooth) up-vector:
 			
