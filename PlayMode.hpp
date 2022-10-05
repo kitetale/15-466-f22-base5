@@ -23,6 +23,9 @@ struct PlayMode : Mode {
 		glm::vec3 orig;
 		glm::vec3 dir;
 	} r1, r2, r3, r4;
+
+	glm::vec3 r1_base;
+	
 	//width, length, height of character
 	glm::vec3 dimension = glm::vec3 (1.0f, 1.0f, 2.0f); // height is from the floor
 	glm::vec3 halfDim = dimension/2.0f; //half of each for ease of computation

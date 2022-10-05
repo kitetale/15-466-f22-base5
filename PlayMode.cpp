@@ -75,6 +75,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	r1.orig = ray1->position;
 	r1.dir = glm::vec3(0.f,0.f,-1.0f);
+	r1_base = r1.dir;
 
 }
 
@@ -196,6 +197,15 @@ void PlayMode::update(float elapsed) {
 		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
 		glm::vec3(1.0f, 0.0f, 0.0f)
 	);
+	r1.dir = r1_base * glm::angleAxis(
+		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
+		glm::vec3(-1.0f, 0.0f, 0.0f)
+	);
+	std::cout<<"r1 dir: "<< r1.dir.x << ", "<< r1.dir.y << ", "<<r1.dir.z<<std::endl;
+	if (BoxRayCollision(r1)) { //collides with ray
+		std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
+
+	}
 
 	//player walking:
 	{
