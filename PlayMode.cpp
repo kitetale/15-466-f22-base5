@@ -53,8 +53,14 @@ PlayMode::PlayMode() : scene(*maze_scene) {
 	for (auto &transform : scene.transforms) {
 		if (transform.name == "character") character.character_transform = &transform;
 		if (transform.name == "raybox") ray1 = &transform;
+		if (transform.name == "raybox1") ray2 = &transform;
+		if (transform.name == "raybox2") ray3 = &transform;
+		if (transform.name == "raybox3") ray4 = &transform;
 	}
 	ray1_base_rot = ray1->rotation;
+	ray2_base_rot = ray2->rotation;
+	ray3_base_rot = ray3->rotation;
+	ray4_base_rot = ray4->rotation;
 	char_base_rot = character.character_transform->rotation;
 
 	//create a player camera attached to a child of the player transform:
@@ -66,10 +72,10 @@ PlayMode::PlayMode() : scene(*maze_scene) {
 	character.camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
-	character.camera->transform->position = glm::vec3(0.0f, -3.0f, 3.0f);
+	character.camera->transform->position = glm::vec3(0.0f, -2.0f, 3.0f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	character.camera->transform->rotation = glm::angleAxis(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	player.transform->position = glm::vec3(2.0f,1.0f,0.0f);
 	character.character_transform->position = glm::vec3(2.0f,1.0f,0.0f);
@@ -82,7 +88,17 @@ PlayMode::PlayMode() : scene(*maze_scene) {
 
 	r1.orig = ray1->position;
 	r1.dir = glm::vec3(0.f,0.f,-1.0f);
+	r2.orig = ray2->position;
+	r2.dir = glm::vec3(0.f,0.f,-1.0f);
+	r3.orig = ray3->position;
+	r3.dir = glm::vec3(0.f,0.f,-1.0f);
+	r4.orig = ray4->position;
+	r4.dir = glm::vec3(0.f,0.f,-1.0f);
+
 	r1_base = r1.dir;
+	r2_base = r2.dir;
+	r3_base = r3.dir;
+	r4_base = r4.dir;
 
 }
 
@@ -204,17 +220,47 @@ void PlayMode::update(float elapsed) {
 	wobble += elapsed / 10.0f;
 	wobble -= std::floor(wobble);
 
+	// ray in front of start pos
 	ray1->rotation = ray1_base_rot * glm::angleAxis(
-		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
-		glm::vec3(1.0f, 0.0f, 0.0f)
+		glm::radians(30.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
+		glm::vec3(0.0f, 1.0f, 0.0f)
 	);
 	r1.dir = r1_base * glm::angleAxis(
-		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
+		glm::radians(30.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
+		glm::vec3(0.0f, -1.0f, 0.0f)
+	);
+	// ray to the right
+	ray2->rotation = ray2_base_rot * glm::angleAxis(
+		glm::radians(30.0f * std::sin(wobble * 4.0f * 2.0f * float(M_PI))),
+		glm::vec3(0.0f, 1.0f, 0.0f)
+	);
+	r2.dir = r2_base * glm::angleAxis(
+		glm::radians(30.0f * std::sin(wobble * 4.0f * 2.0f * float(M_PI))),
+		glm::vec3(0.0f, -1.0f, 0.0f)
+	);
+	// ray behind
+	ray3->rotation = ray3_base_rot * glm::angleAxis(
+		glm::radians(30.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
+		glm::vec3(1.0f, 0.0f, 0.0f)
+	);
+	r3.dir = r3_base * glm::angleAxis(
+		glm::radians(30.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
 		glm::vec3(-1.0f, 0.0f, 0.0f)
 	);
-	if (BoxRayCollision(r1)) { //collides with ray
-		std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
+	// ray to the left
+	ray4->rotation = ray4_base_rot * glm::angleAxis(
+		glm::radians(30.0f * std::sin(wobble * 3.0f * 2.0f * float(M_PI))),
+		glm::vec3(0.0f, 1.0f, 0.0f)
+	);
+	r4.dir = r4_base * glm::angleAxis(
+		glm::radians(30.0f * std::sin(wobble * 3.0f * 2.0f * float(M_PI))),
+		glm::vec3(0.0f, -1.0f, 0.0f)
+	);
 
+	if (BoxRayCollision(r1) || BoxRayCollision(r2) || BoxRayCollision(r3) || BoxRayCollision(r4)) { //collides with ray
+		std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
+	} else {
+		std::cout<< "alls good " <<std::endl;
 	}
 
 	//player walking:
