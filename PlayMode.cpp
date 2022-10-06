@@ -76,6 +76,9 @@ PlayMode::PlayMode() : scene(*maze_scene) {
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
+	std::cout<<"pos: "<<player.transform->position.x<<", "<<player.transform->position.y<<", "<< player.transform->position.z<<std::endl;
+	std::cout<<"tri: "<<player.at.indices.x<<", "<<player.at.indices.y<<", "<<player.at.indices.z<<std::endl;
+	std::cout<<"bary: "<<player.at.weights.x<<", "<<player.at.weights.y<<", "<<player.at.weights.z<<std::endl;
 
 	r1.orig = ray1->position;
 	r1.dir = glm::vec3(0.f,0.f,-1.0f);
@@ -184,8 +187,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			// update yaw of character so that it's always facing front
 			character.character_transform->rotation = glm::angleAxis(-motion.x *character.camera->fovy, upDir) * character.character_transform->rotation;
 			//std::cout<<"pos: "<< character.character_transform->position.x << ", "<< character.character_transform->position.y << ", "<<character.character_transform->position.z<<std::endl;
-			glm::vec3 location = character.character_transform->make_local_to_world() * glm::vec4(0.0f,0.0f,0.0f,1.0f);
-			std::cout<<"pos: "<< location.x << ", "<< location.y << ", "<<location.z<<std::endl;
+			//glm::vec3 location = character.character_transform->make_local_to_world() * glm::vec4(0.0f,0.0f,0.0f,1.0f);
+			// std::cout<<"pos: "<< location.x << ", "<< location.y << ", "<<location.z<<std::endl;
 			
 			
 			return true;
@@ -319,6 +322,10 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+
+	std::cout<<"pos: "<<player.transform->position.x<<", "<<player.transform->position.y<<", "<< player.transform->position.z<<std::endl;
+	// std::cout<<"tri: "<<player.at.indices.x<<", "<<player.at.indices.y<<", "<<player.at.indices.z<<std::endl;
+	// std::cout<<"bary: "<<player.at.weights.x<<", "<<player.at.weights.y<<", "<<player.at.weights.z<<std::endl;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
