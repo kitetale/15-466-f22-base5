@@ -262,9 +262,17 @@ void PlayMode::update(float elapsed) {
 
 	// ray collision check
 	if (BoxRayCollision(r1) || BoxRayCollision(r2) || BoxRayCollision(r3) || BoxRayCollision(r4)) { //collides with ray
-		std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
+		if (!rayHit) {
+			std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
+			rayHit = true;
+			life--;
+			std::cout<<life<<" life left.. "<<std::endl;
+		}
 	} else {
-		std::cout<< "alls good " <<std::endl;
+		if (rayHit && !gameDone) {
+			std::cout<< "alls good now " <<std::endl;
+		}
+		rayHit = false;
 	}
 
 	//player walking:
@@ -368,8 +376,13 @@ void PlayMode::update(float elapsed) {
 	}
 
 	// check if player has arrived to the destination (goal)
-	if (hasReached()) {
+	if (hasReached()&&!gameDone) {
 		std::cout<<"Good job reaching the goal"<<std::endl;
+		gameDone = true;
+	}
+	// check if player hit ray three times
+	if (life <= 0&&!gameDone) {
+		std::cout<<"No More Life :( Game Over"<<std::endl;
 		gameDone = true;
 	}
 

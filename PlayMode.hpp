@@ -60,6 +60,9 @@ struct PlayMode : Mode {
 	bool hasReached();
 	bool gameDone = false;
 
+	int life = 3;
+	bool rayHit = false;
+
 	float wobble = 0.0f;
 
 	//player info:
