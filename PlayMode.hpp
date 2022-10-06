@@ -55,6 +55,11 @@ struct PlayMode : Mode {
 	glm::quat ray3_base_rot;
 	glm::quat ray4_base_rot;
 
+	//goal to reach
+	Scene::Transform *goal = nullptr;
+	bool hasReached();
+	bool gameDone = false;
+
 	float wobble = 0.0f;
 
 	//player info:

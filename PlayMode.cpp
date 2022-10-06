@@ -56,6 +56,7 @@ PlayMode::PlayMode() : scene(*maze_scene) {
 		if (transform.name == "raybox1") ray2 = &transform;
 		if (transform.name == "raybox2") ray3 = &transform;
 		if (transform.name == "raybox3") ray4 = &transform;
+		if (transform.name == "goal") goal = &transform;
 	}
 	ray1_base_rot = ray1->rotation;
 	ray2_base_rot = ray2->rotation;
@@ -150,6 +151,8 @@ bool PlayMode::BoxRayCollision(Ray r) {
 
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
+	// if reached destination, no more move, game done
+	if (gameDone) return false;
 
 	if (evt.type == SDL_KEYDOWN) {
 		if (evt.key.keysym.sym == SDLK_ESCAPE) {
@@ -257,6 +260,7 @@ void PlayMode::update(float elapsed) {
 		glm::vec3(0.0f, -1.0f, 0.0f)
 	);
 
+	// ray collision check
 	if (BoxRayCollision(r1) || BoxRayCollision(r2) || BoxRayCollision(r3) || BoxRayCollision(r4)) { //collides with ray
 		std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
 	} else {
@@ -363,15 +367,28 @@ void PlayMode::update(float elapsed) {
 		*/
 	}
 
+	// check if player has arrived to the destination (goal)
+	if (hasReached()) {
+		std::cout<<"Good job reaching the goal"<<std::endl;
+		gameDone = true;
+	}
+
 	//reset button press counters:
 	left.downs = 0;
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
 
-	// std::cout<<"pos: "<<player.transform->position.x<<", "<<player.transform->position.y<<", "<< player.transform->position.z<<std::endl;
-	// std::cout<<"tri: "<<player.at.indices.x<<", "<<player.at.indices.y<<", "<<player.at.indices.z<<std::endl;
-	// std::cout<<"bary: "<<player.at.weights.x<<", "<<player.at.weights.y<<", "<<player.at.weights.z<<std::endl;
+}
+
+bool PlayMode::hasReached() {
+	if (player.transform->position.x <= goal->position.x + 1.0f &&
+		player.transform->position.x >= goal->position.x - 1.0f &&
+		player.transform->position.y <= goal->position.y + 1.0f &&
+		player.transform->position.y >= goal->position.y - 1.0f ) {
+		return true;
+	}
+	return false;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
