@@ -83,9 +83,6 @@ PlayMode::PlayMode() : scene(*maze_scene) {
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
-	std::cout<<"pos: "<<player.transform->position.x<<", "<<player.transform->position.y<<", "<< player.transform->position.z<<std::endl;
-	std::cout<<"tri: "<<player.at.indices.x<<", "<<player.at.indices.y<<", "<<player.at.indices.z<<std::endl;
-	std::cout<<"bary: "<<player.at.weights.x<<", "<<player.at.weights.y<<", "<<player.at.weights.z<<std::endl;
 
 	r1.orig = ray1->position;
 	r1.dir = glm::vec3(0.f,0.f,-1.0f);
@@ -377,7 +374,7 @@ void PlayMode::update(float elapsed) {
 
 	// check if player has arrived to the destination (goal)
 	if (hasReached()&&!gameDone) {
-		std::cout<<"Good job reaching the goal"<<std::endl;
+		std::cout<<"Good job reaching the goal!!"<<std::endl;
 		gameDone = true;
 	}
 	// check if player hit ray three times
