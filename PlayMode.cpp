@@ -323,7 +323,7 @@ void PlayMode::update(float elapsed) {
 	up.downs = 0;
 	down.downs = 0;
 
-	std::cout<<"pos: "<<player.transform->position.x<<", "<<player.transform->position.y<<", "<< player.transform->position.z<<std::endl;
+	// std::cout<<"pos: "<<player.transform->position.x<<", "<<player.transform->position.y<<", "<< player.transform->position.z<<std::endl;
 	// std::cout<<"tri: "<<player.at.indices.x<<", "<<player.at.indices.y<<", "<<player.at.indices.z<<std::endl;
 	// std::cout<<"bary: "<<player.at.weights.x<<", "<<player.at.weights.y<<", "<<player.at.weights.z<<std::endl;
 }
